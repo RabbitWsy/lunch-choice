@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>今天吃什么鸭？</title>
+    <style>
+        :root { --bg: #FFF3E0; --card-bg: #FFFFFF; --primary: #FF8A80; --text: #5D4037; }
+        body { margin: 0; padding: 20px; background: var(--bg); font-family: "Microsoft YaHei", sans-serif; text-align: center; color: var(--text); overflow-x: hidden; }
+        
+        h1 { margin-bottom: 5px; font-size: 1.8rem; }
+        p { color: #8d6e63; font-size: 0.9rem; margin-bottom: 30px; }
+
+        .arena {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+            max-width: 1000px; margin: 0 auto 100px auto; /* 底部留白给按钮 */
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 8px;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        /* --- 💀 随机消失特效库 --- */
+        
+        /* 1. 爆炸消失 */
+        @keyframes boom {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; filter: blur(4px); }
+        }
+        .die-boom { animation: boom 0.5s ease-out forwards; pointer-events: none; }
+
+        /* 2. 坠入深渊 */
+        @keyframes drop {
+            0% { transform: translateY(0) rotate(0); }
+            100% { transform: translateY(200px) rotate(45deg); opacity: 0; }
+        }
+        .die-drop { animation: drop 0.6s ease-in forwards; pointer-events: none; }
+
+        /* 3. 灵魂升天 */
+        @keyframes fly {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-150px); opacity: 0; filter: grayscale(100%); }
+        }
+        .die-fly { animation: fly 0.7s ease-out forwards; pointer-events: none; }
+
+        /* 4. 像素缩小 */
+        @keyframes shrink {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .die-shrink { animation: shrink 0.4s ease-in forwards; pointer-events: none; }
+
+        /* --- 👑 赢家特效 --- */
+        .winner {
+            transform: scale(1.3) !important;
+            border: 3px solid var(--primary);
+            background: #FFEBEE;
+            box-shadow: 0 0 30px rgba(255, 138, 128, 0.5);
+            z-index: 100;
+        }
+        .winner::after {
+            content: '👑'; position: absolute; top: -15px; right: -10px; font-size: 24px;
+            animation: bounce 0.6s infinite alternate;
+        }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+        /* --- 按钮 --- */
+        button {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(45deg, #FF8A80, #FF5252);
+            color: white; border: none; padding: 15px 50px;
+            border-radius: 50px; font-size: 1.2rem; font-weight: bold;
+            box-shadow: 0 10px 20px rgba(255, 82, 82, 0.3);
+            cursor: pointer; transition: transform 0.1s;
+        }
+        button:active { transform: translateX(-50%) scale(0.95); }
+        button:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+        /* 错误提示 */
+        #error-msg { color: red; display: none; font-size: 0.8rem; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>✨ 吃什么大逃杀 ✨</h1>
+    <p>餐厅们要逐渐随机消失了哦...</p>
+
+    <div class="arena" id="arena"></div>
+    <div id="error-msg">⚠️ 没找到 data.js 文件，请确保它和网页在同一文件夹内。</div>
+
+    <button onclick="startBattle()" id="btn">开始淘汰咯</button>
+
+    <script src="data.js" onerror="showError()"></script>
+
+    <script>
+        const arena = document.getElementById('arena');
+        const btn = document.getElementById('btn');
+        let cards = [];
+        
+        // 死亡特效列表（对应 CSS 中的 class）
+        const deathEffects = ['die-boom', 'die-drop', 'die-fly', 'die-shrink'];
+
+        function showError() {
+            document.getElementById('error-msg').style.display = 'block';
+        }
+
+        // 初始化渲染
+        function init() {
+            if (!window.restaurantData) {
+                showError();
+                return;
+            }
+            arena.innerHTML = '';
+            cards = [];
+            window.restaurantData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `<span>${item.icon}</span> ${item.name}`;
+                arena.appendChild(div);
+                cards.push(div);
+            });
+        }
+
+        // 核心游戏逻辑
+        function startBattle() {
+            if (cards.length === 0) return;
+
+            // 重置状态：移除所有特效类，移除赢家类
+            cards.forEach(card => {
+                card.className = 'card'; // 暴力重置 class
+                // 强制重绘，否则动画可能不回放
+                void card.offsetWidth;
+            });
+
+            btn.disabled = true;
+            btn.innerText = "生存游戏中...";
+
+            // 活跃卡片池
+            let activeCards = [...cards];
+            let speed = 100; // 初始速度
+
+            function killNext() {
+                // 胜利判定
+                if (activeCards.length === 1) {
+                    const winner = activeCards[0];
+                    winner.classList.add('winner');
+                    btn.disabled = false;
+                    btn.innerText = "再玩一次";
+                    return;
+                }
+
+                // 随机选择受害者
+                const rIndex = Math.floor(Math.random() * activeCards.length);
+                const victim = activeCards[rIndex];
+
+                // 随机选择特效
+                const rEffect = deathEffects[Math.floor(Math.random() * deathEffects.length)];
+                victim.classList.add(rEffect);
+
+                // 从活跃列表中移除
+                activeCards.splice(rIndex, 1);
+
+                // 动态调整速度：剩得越少，速度越慢（紧张感）
+                const remaining = activeCards.length;
+                if (remaining < 5) speed += 100;
+                if (remaining === 2) speed += 300; // 最后两名决战时最慢
+
+                setTimeout(killNext, speed);
+            }
+
+            killNext();
+        }
+
+        // 页面加载后尝试初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
