@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 专属点餐机：今天吃什么？</title>
+    <style>
+        /* --- 1. 页面整体布局 --- */
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #fce4ec; /* 浪漫的淡粉色背景 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #d81b60;
+            font-size: 24px;
+        }
+
+        /* --- 2. 老虎机主体窗口 --- */
+        .slot-machine {
+            position: relative;
+            width: 300px;
+            height: 120px; /* 窗口高度，只能看到一个选项 */
+            background: #fff;
+            border-radius: 15px;
+            border: 4px solid #d81b60;
+            overflow: hidden; /* 关键：隐藏滚动条和多余内容 */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        /* 中间的高亮线条（指示器） */
+        .slot-machine::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(216, 27, 96, 0.2);
+            z-index: 10;
+            transform: translateY(-50%);
+        }
+        
+        /* 两个三角形指示标 */
+        .slot-machine::after {
+            content: "◀";
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            color: #d81b60;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        /* --- 3. 滚动的长列表 --- */
+        .reel {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            /* 初始位置 */
+            transform: translateY(0); 
+            /* 动画过渡效果：贝塞尔曲线模拟“先快后慢”的物理感 */
+            transition: transform 3s cubic-bezier(0.1, 0.7, 0.1, 1); 
+        }
+
+        .item {
+            height: 120px; /* 必须和窗口高度一致 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #444;
+            border-bottom: 1px solid #eee;
+            box-sizing: border-box;
+        }
+
+        /* --- 4. 按钮样式 --- */
+        button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            border: none;
+            border-radius: 50px;
+            background-color: #d81b60;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px #ad1457;
+            transition: all 0.1s;
+        }
+
+        button:active {
+            box-shadow: 0 0 #ad1457;
+            transform: translateY(4px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* 结果展示文字 */
+        #result {
+            margin-top: 20px;
+            height: 30px;
+            font-size: 18px;
+            color: #d81b60;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>👇 可爱的格榕妹妹，今天吃哪家呢？</h1>
+
+    <div class="slot-machine">
+        <div class="reel" id="reel">
+            </div>
+    </div>
+
+    <div id="result"></div>
+
+    <button id="spin-btn" onclick="spin()">开始觅食！</button>
+
+    <script>
+        // 1. 你的餐厅数据（可以随意修改）
+        const restaurants = [
+            "🍝 莎莉亚",
+            "🍐 小吊梨汤",
+            "🧂 Black Salt",
+            "🍔 克比叔叔"
+        ];
+
+        const reel = document.getElementById('reel');
+        const btn = document.getElementById('spin-btn');
+        const resultText = document.getElementById('result');
+        const itemHeight = 120; // 每一项的高度，和CSS一致
+        
+        // 为了让它看起来能一直转，我们需要把列表重复很多次
+        // 比如重复 50 次，足够转很久了
+        let listHTML = "";
+        for (let i = 0; i < 50; i++) {
+            restaurants.forEach(rest => {
+                listHTML += `<div class="item">${rest}</div>`;
+            });
+        }
+        reel.innerHTML = listHTML;
+
+        // 记录当前的位置
+        let currentPosition = 0;
+
+        function spin() {
+            // 禁用按钮，防止连点
+            btn.disabled = true;
+            btn.innerText = "正在选择...";
+            resultText.innerText = "";
+
+            // 1. 随机决定停在第几个（在列表的中间段落随机，保证视觉上是向下滚）
+            // 比如我们在第 20 组到第 40 组之间随机选一个
+            const randomGroup = 20 + Math.floor(Math.random() * 20); 
+            const randomItemIndex = Math.floor(Math.random() * restaurants.length);
+            
+            // 计算最终停下的索引总数
+            const finalIndex = (randomGroup * restaurants.length) + randomItemIndex;
+
+            // 2. 计算滚动的像素距离 (负值表示向上移动)
+            // 稍微加上一点随机偏移(±2px)增加真实感，或者精准对齐
+            const newPosition = -(finalIndex * itemHeight);
+
+            // 3. 执行动画
+            reel.style.transform = `translateY(${newPosition}px)`;
+
+            // 4. 动画结束后（3秒后）显示结果
+            setTimeout(() => {
+                const winner = restaurants[randomItemIndex];
+                resultText.innerText = "✨ 就决定是： " + winner + " ！ ✨";
+                btn.disabled = false;
+                btn.innerText = "不满意？重摇";
+                
+                // (可选) 可以在这里重置位置，或者就让它停在这里，
+                // 简单的做法是下一次点击时重置瞬间位置，或者继续往下加 HTML（稍微复杂点）
+                // 为了简单稳定，如果这次滚太远了，我们可以在这里偷偷重置一下视觉位置（高级技巧），
+                // 但对于普通用户，直接刷新页面或者保持现状即可。
+                
+            }, 3000); // 这里的 3000 对应 CSS 里的 3s
+        }
+    </script>
+</body>
+</html>
