@@ -2,13 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>💖 专属点餐机：今天吃什么？</title>
     <style>
         /* --- 1. 页面整体布局 --- */
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background-color: #fce4ec; /* 浪漫的淡粉色背景 */
+            background-color: #fce4ec;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,45 +16,44 @@
             height: 100vh;
             margin: 0;
             color: #333;
+            overflow: hidden; /* 防止因为设置弹窗出现滚动条 */
         }
 
         h1 {
             margin-bottom: 20px;
             color: #d81b60;
-            font-size: 24px;
+            font-size: 22px;
+            text-align: center;
+            line-height: 1.4;
+            padding: 0 20px;
         }
 
         /* --- 2. 老虎机主体窗口 --- */
         .slot-machine {
             position: relative;
             width: 300px;
-            height: 120px; /* 窗口高度，只能看到一个选项 */
+            height: 120px;
             background: #fff;
             border-radius: 15px;
             border: 4px solid #d81b60;
-            overflow: hidden; /* 关键：隐藏滚动条和多余内容 */
+            overflow: hidden;
             box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
         }
 
-        /* 中间的高亮线条（指示器） */
         .slot-machine::before {
             content: "";
             position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 2px;
+            top: 50%; left: 0; width: 100%; height: 2px;
             background: rgba(216, 27, 96, 0.2);
             z-index: 10;
             transform: translateY(-50%);
         }
         
-        /* 两个三角形指示标 */
         .slot-machine::after {
             content: "◀";
             position: absolute;
-            top: 50%;
-            right: 10px;
+            top: 50%; right: 10px;
             color: #d81b60;
             transform: translateY(-50%);
             z-index: 10;
@@ -63,29 +62,27 @@
         /* --- 3. 滚动的长列表 --- */
         .reel {
             list-style: none;
-            padding: 0;
-            margin: 0;
-            /* 初始位置 */
+            padding: 0; margin: 0;
             transform: translateY(0); 
-            /* 动画过渡效果：贝塞尔曲线模拟“先快后慢”的物理感 */
             transition: transform 3s cubic-bezier(0.1, 0.7, 0.1, 1); 
         }
 
         .item {
-            height: 120px; /* 必须和窗口高度一致 */
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 26px; /* 稍微调小一点防止名字太长换行 */
             font-weight: bold;
             color: #444;
             border-bottom: 1px solid #eee;
             box-sizing: border-box;
+            padding: 0 10px;
+            text-align: center;
         }
 
         /* --- 4. 按钮样式 --- */
-        button {
-            margin-top: 30px;
+        .main-btn {
             padding: 15px 40px;
             font-size: 20px;
             border: none;
@@ -97,24 +94,93 @@
             transition: all 0.1s;
         }
 
-        button:active {
+        .main-btn:active {
             box-shadow: 0 0 #ad1457;
             transform: translateY(4px);
         }
 
-        button:disabled {
+        .main-btn:disabled {
             background-color: #ccc;
             box-shadow: none;
             cursor: not-allowed;
         }
 
-        /* 结果展示文字 */
         #result {
-            margin-top: 20px;
+            margin-top: 10px;
             height: 30px;
             font-size: 18px;
             color: #d81b60;
             font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* --- 5. 设置面板样式 (新增) --- */
+        .settings-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid #d81b60;
+            color: #d81b60;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .settings-panel {
+            display: none; /* 默认隐藏 */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-box h3 {
+            margin: 0 0 10px 0;
+            color: #d81b60;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            border: 2px solid #fce4ec;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #d81b60;
+        }
+
+        .save-btn {
+            background: #d81b60;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -129,70 +195,135 @@
 
     <div id="result"></div>
 
-    <button id="spin-btn" onclick="spin()">开始觅食！</button>
+    <button class="main-btn" id="spin-btn" onclick="spin()">开始觅食！</button>
+
+    <button class="settings-toggle" onclick="toggleSettings()">⚙️ 修改菜单</button>
+
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-box">
+            <h3>📝 编辑餐厅列表</h3>
+            <p style="font-size:12px; color:#666; margin:0;">一行输入一个餐厅名字：</p>
+            <textarea id="restaurant-input" placeholder="请输入餐厅，一行一个..."></textarea>
+            <button class="save-btn" onclick="saveAndRefresh()">保存并更新</button>
+            <button style="background:none; border:none; color:#999; margin-top:5px; cursor:pointer;" onclick="toggleSettings()">取消</button>
+        </div>
+    </div>
 
     <script>
-        // 1. 你的餐厅数据（可以随意修改）
-        const restaurants = [
+        // 默认数据（第一次打开时显示）
+        const defaultRestaurants = [
             "🍝 莎莉亚",
             "🍐 小吊梨汤",
             "🧂 Black Salt",
             "🍔 克比叔叔"
         ];
 
+        let restaurants = [];
         const reel = document.getElementById('reel');
         const btn = document.getElementById('spin-btn');
         const resultText = document.getElementById('result');
-        const itemHeight = 120; // 每一项的高度，和CSS一致
-        
-        // 为了让它看起来能一直转，我们需要把列表重复很多次
-        // 比如重复 50 次，足够转很久了
-        let listHTML = "";
-        for (let i = 0; i < 50; i++) {
-            restaurants.forEach(rest => {
-                listHTML += `<div class="item">${rest}</div>`;
-            });
+        const itemHeight = 120; 
+
+        // --- 1. 初始化逻辑 ---
+        function init() {
+            // 尝试从本地存储读取
+            const savedData = localStorage.getItem('myDinnerList');
+            if (savedData) {
+                restaurants = JSON.parse(savedData);
+            } else {
+                restaurants = [...defaultRestaurants];
+            }
+            
+            // 渲染滚轮
+            renderReel();
         }
-        reel.innerHTML = listHTML;
 
-        // 记录当前的位置
-        let currentPosition = 0;
+        // --- 2. 渲染老虎机列表 ---
+        function renderReel() {
+            let listHTML = "";
+            // 重复 50 次制造无限滚动的视觉
+            for (let i = 0; i < 50; i++) {
+                restaurants.forEach(rest => {
+                    listHTML += `<div class="item">${rest}</div>`;
+                });
+            }
+            reel.innerHTML = listHTML;
+            // 重置位置
+            reel.style.transition = 'none';
+            reel.style.transform = 'translateY(0px)';
+        }
 
+        // --- 3. 抽奖逻辑 ---
         function spin() {
-            // 禁用按钮，防止连点
+            if (restaurants.length === 0) {
+                alert("菜单是空的，快去设置里添加餐厅吧！");
+                return;
+            }
+
             btn.disabled = true;
             btn.innerText = "正在选择...";
             resultText.innerText = "";
 
-            // 1. 随机决定停在第几个（在列表的中间段落随机，保证视觉上是向下滚）
-            // 比如我们在第 20 组到第 40 组之间随机选一个
+            // 恢复动画属性
+            reel.style.transition = 'transform 3s cubic-bezier(0.1, 0.7, 0.1, 1)';
+
             const randomGroup = 20 + Math.floor(Math.random() * 20); 
             const randomItemIndex = Math.floor(Math.random() * restaurants.length);
-            
-            // 计算最终停下的索引总数
             const finalIndex = (randomGroup * restaurants.length) + randomItemIndex;
-
-            // 2. 计算滚动的像素距离 (负值表示向上移动)
-            // 稍微加上一点随机偏移(±2px)增加真实感，或者精准对齐
             const newPosition = -(finalIndex * itemHeight);
 
-            // 3. 执行动画
             reel.style.transform = `translateY(${newPosition}px)`;
 
-            // 4. 动画结束后（3秒后）显示结果
             setTimeout(() => {
                 const winner = restaurants[randomItemIndex];
                 resultText.innerText = "✨ 就决定是： " + winner + " ！ ✨";
                 btn.disabled = false;
                 btn.innerText = "妹妹你是不是还想重摇呀？";
-                
-                // (可选) 可以在这里重置位置，或者就让它停在这里，
-                // 简单的做法是下一次点击时重置瞬间位置，或者继续往下加 HTML（稍微复杂点）
-                // 为了简单稳定，如果这次滚太远了，我们可以在这里偷偷重置一下视觉位置（高级技巧），
-                // 但对于普通用户，直接刷新页面或者保持现状即可。
-                
-            }, 3000); // 这里的 3000 对应 CSS 里的 3s
+            }, 3000); 
         }
+
+        // --- 4. 设置面板逻辑 ---
+        const settingsPanel = document.getElementById('settings-panel');
+        const textarea = document.getElementById('restaurant-input');
+
+        function toggleSettings() {
+            const isHidden = settingsPanel.style.display === 'none' || settingsPanel.style.display === '';
+            if (isHidden) {
+                // 打开时，把当前的餐厅列表填入文本框
+                textarea.value = restaurants.join('\n');
+                settingsPanel.style.display = 'flex';
+            } else {
+                settingsPanel.style.display = 'none';
+            }
+        }
+
+        function saveAndRefresh() {
+            const text = textarea.value;
+            // 把文本转换成数组：按换行符分割 -> 去除首尾空格 -> 去除空行
+            const newStats = text.split('\n').map(line => line.trim()).filter(line => line !== "");
+
+            if (newStats.length < 2) {
+                alert("至少输入两个餐厅才能玩哦！");
+                return;
+            }
+
+            // 更新全局变量
+            restaurants = newStats;
+            // 保存到浏览器缓存
+            localStorage.setItem('myDinnerList', JSON.stringify(restaurants));
+            
+            // 重新渲染界面
+            renderReel();
+            settingsPanel.style.display = 'none';
+            
+            // 重置按钮文字
+            btn.innerText = "开始觅食！";
+            resultText.innerText = "菜单已更新 ✅";
+        }
+
+        // 启动！
+        init();
+
     </script>
 </body>
 </html>
